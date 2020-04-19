@@ -26,7 +26,7 @@ public class EditGroupDialog extends JDialog {
     private String group, description;
 
     EditGroupDialog(final JFrame owner, boolean modal, String group, String description) {
-        super(owner, "New Group", modal);
+        super(owner, "Edit Group", modal);
         setResizable(false);
         font = new Font("Serif", Font.PLAIN, 20);
         this.group=group;
@@ -63,7 +63,6 @@ public class EditGroupDialog extends JDialog {
                 File groupDirectory = new File("StorageData\\" + groupTextField.getText());
                 if (groupTextField.getText().equals(group)) writeDescription();
                 else if (directoryBefore.exists()){
-                    System.out.println(directoryBefore.renameTo(groupDirectory));
                     writeDescription();
                 }
                 Storage.revalidateGroupsTableData();
@@ -80,7 +79,7 @@ public class EditGroupDialog extends JDialog {
     }
 
     private void writeDescription(){
-        File description = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + groupTextField.getText() + "\\description.txt");
+        File description = new File("StorageData\\" + groupTextField.getText() + "\\description.txt");
         try {
             PrintWriter writer = new PrintWriter(description);
             writer.write(descriptionTextArea.getText());
