@@ -54,7 +54,12 @@ public class AddNewGroupDialog extends JDialog {
         jButtonCreate.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!groupTextField.getText().equals("")) {
+                if(!Storage.isGroupNameUnique(groupTextField.getText())){
+                    jLabelStatus.setText("Incorrect input");
+                    jLabelStatus.setForeground(Color.RED);
+                    jLabelStatus.revalidate();
+                }
+                else if (!groupTextField.getText().equals("") ) {
                     Path path = Paths.get("StorageData\\" + groupTextField.getText());
                     try {
                         Files.createDirectory(path);

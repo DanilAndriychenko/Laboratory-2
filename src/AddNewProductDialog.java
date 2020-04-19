@@ -73,7 +73,12 @@ public class AddNewProductDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         jButtonCreate.addActionListener(e -> {
-            if (!groupTextField.getText().equals("") && !jLabelManufacturer.getText().equals("")) {
+            if(!Storage.isProductNameUnique(groupTextField.getText())){
+                jLabelStatus.setText("Incorrect input");
+                jLabelStatus.setForeground(Color.RED);
+                jLabelStatus.revalidate();
+            }
+            else if (!groupTextField.getText().equals("") && !jLabelManufacturer.getText().equals("")) {
                 File productFile = new File("StorageData\\" + groupComboBox.getSelectedItem() + "\\" + groupTextField.getText() + ".txt");
                 try {
                     PrintWriter writer = new PrintWriter(productFile);
@@ -101,4 +106,6 @@ public class AddNewProductDialog extends JDialog {
         }
         return groups;
     }
+
+
 }

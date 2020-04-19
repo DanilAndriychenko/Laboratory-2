@@ -6,9 +6,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.*;
 import java.util.Scanner;
 
 public class Storage {
@@ -17,7 +17,7 @@ public class Storage {
     private static JPanel groupPanel, firstPartContent, secondPartContent, titleWithPlusGroups, titleWithPlusProducts, productsPanel;
     private static JTable tableGroups, tableProducts;
     private static Object[] titlesGroups = {"Group of Products", "Description", "Overall Price"};
-    private static Object[] titlesProducts = {"Product", "Description", "Group of Product", "Manufacturer", "Price per one", "Overall Price"};
+    private static Object[] titlesProducts = {"Product", "Description", "Group of Product", "Manufacturer", "Price per one", "Num in storage"};
     private static JPopupMenu jPopupMenu;
     private JPanel controlPanel, contentPanel;
     private Font font;
@@ -64,7 +64,7 @@ public class Storage {
                 //TODO
                 e.printStackTrace();
             }
-            Object[] objects = {storage.list()[i], description, 0};
+            Object[] objects = {storage.list()[i], description, Storage.overallPrice(storage.list()[i].split(".txt")[0])};
             defaultTableModel.addRow(objects);
         }
         tableGroups = new JTable(defaultTableModel);
@@ -106,7 +106,7 @@ public class Storage {
                             productContent += (scan.nextLine() + " ");
                     } while (scan.hasNext());
                 } catch (Exception e) {
-                    //TODO
+
                     e.printStackTrace();
                 }
                 String[] content = productContent.split("\\$");
@@ -217,63 +217,7 @@ public class Storage {
         searchProductTextField.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-
-                String product = searchProductTextField.getText();
-
-                if (product.equals("")) {
-                    revalidateProductsTableData();
-                    return;
-                }
-                DefaultTableModel defaultTableModel = new DefaultTableModel() {
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        if (column == 2 || column == 5) return false;
-                        return true;
-                    }
-                };
-                defaultTableModel.setColumnIdentifiers(titlesProducts);
-                File storage = new File("StorageData\\");
-                for (int i = 0; i < storage.list().length; i++) {
-                    File group = new File("StorageData\\" + storage.listFiles()[i].getName());
-                    for (int j = 0; j < group.list().length; j++) {
-                        if (!group.listFiles()[j].getName().equals("description.txt")) {
-                            System.out.println(group.listFiles()[j].getName());
-                            String productContent = "";
-                            if (group.listFiles()[j].getName().equalsIgnoreCase(product + ".txt")) {
-                                FileReader reader = null;
-                                try {
-                                    reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
-                                } catch (FileNotFoundException ex) {
-                                    ex.printStackTrace();
-                                }
-                                Scanner scan = new Scanner(reader);
-                                do {
-                                    if (scan.hasNext())
-                                        productContent += (scan.nextLine() + " ");
-                                } while (scan.hasNext());
-                                String[] content = productContent.split("\\$");
-                                System.out.println(content.length);
-                                Object[] objects = {content[1], content[2], content[3], content[4], content[5], content[6]};
-                                defaultTableModel.addRow(objects);
-
-                                tableProducts = new JTable(defaultTableModel);
-                                tableProducts.getTableHeader().setReorderingAllowed(false);
-                                productsPanel.removeAll();
-                                productsPanel.add(titleWithPlusProducts, BorderLayout.NORTH);
-                                JPanel rigidWithFullTable = new JPanel();
-                                rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
-                                rigidWithFullTable.add(Box.createRigidArea(new Dimension(0, 15)));
-                                rigidWithFullTable.add(tableProducts.getTableHeader());
-                                rigidWithFullTable.add(tableProducts);
-                                productsPanel.add(rigidWithFullTable, BorderLayout.CENTER);
-                                frame.getContentPane().revalidate();
-                                frame.getContentPane().repaint();
-                            }
-                        }
-                    }
-                    ;
-                }
-
+                searchProduct(searchProductTextField);
             }
         });
 
@@ -301,10 +245,16 @@ public class Storage {
         revalidateProductsTableData();
 
         addNewProductButton.addActionListener(actionEvent -> {
-            //TODO
             JDialog addNewProductDialog = new AddNewProductDialog(frame, true);
             addNewProductDialog.setLocationRelativeTo(null);
             addNewProductDialog.setVisible(true);
+        });
+
+        searchGroupTextField.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                searchGroup(searchGroupTextField);
+            }
         });
 
 
@@ -342,4 +292,152 @@ public class Storage {
             editGroupDialog.setVisible(true);
         });
     }
+
+    private static void searchGroup(JTextField searchProductTextField){
+        String groupName = searchProductTextField.getText();
+        if(groupName.equalsIgnoreCase("")){
+            revalidateGroupsTableData();
+            return;
+        }
+        File storage = new File("StorageData\\");
+        for(int i = 0; i < storage.listFiles().length; i ++){
+            if(storage.listFiles()[i].getName().equalsIgnoreCase(groupName)){
+                DefaultTableModel defaultTableModel = new DefaultTableModel();
+                String description = "";
+                try {
+                    FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\description.txt");
+                    Scanner scan = new Scanner(reader);
+                    do {
+                        if (scan.hasNext())
+                            description += (scan.nextLine() + " ");
+                    } while (scan.hasNext());
+                    reader.close();
+                } catch (Exception e) {
+                    //TODO
+                    e.printStackTrace();
+                }
+                Object[] objects = {storage.list()[i], description, Storage.overallPrice(storage.list()[i].split(".txt")[0])};
+                defaultTableModel.addRow(objects);
+
+                groupPanel.removeAll();
+            tableGroups = new JTable(defaultTableModel);
+            tableGroups.setComponentPopupMenu(jPopupMenu);
+            tableGroups.getTableHeader().setReorderingAllowed(false);
+            //groupPanel.removeAll();
+            groupPanel.add(titleWithPlusGroups, BorderLayout.NORTH);
+            JPanel rigidWithFullTable = new JPanel();
+            rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
+            rigidWithFullTable.add(Box.createRigidArea(new Dimension(0, 15)));
+            rigidWithFullTable.add(tableGroups.getTableHeader());
+            rigidWithFullTable.add(tableGroups);
+            groupPanel.add(rigidWithFullTable, BorderLayout.CENTER);
+            frame.getContentPane().revalidate();
+            frame.getContentPane().repaint();
+            }
+    }
+    }
+
+    private static void searchProduct(JTextField searchProductTextField){
+
+        String product = searchProductTextField.getText();
+
+        if (product.equals("")) {
+            revalidateProductsTableData();
+            return;
+        }
+        DefaultTableModel defaultTableModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                if (column == 2 || column == 5) return false;
+                return true;
+            }
+        };
+        defaultTableModel.setColumnIdentifiers(titlesProducts);
+        File storage = new File("StorageData\\");
+        for (int i = 0; i < storage.list().length; i++) {
+            File group = new File("StorageData\\" + storage.listFiles()[i].getName());
+            for (int j = 0; j < group.list().length; j++) {
+                if (!group.listFiles()[j].getName().equals("description.txt")) {
+                    System.out.println(group.listFiles()[j].getName());
+                    String productContent = "";
+                    if (group.listFiles()[j].getName().equalsIgnoreCase(product + ".txt")) {
+                        FileReader reader = null;
+                        try {
+                            reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
+                        } catch (FileNotFoundException ex) {
+                            ex.printStackTrace();
+                        }
+                        Scanner scan = new Scanner(reader);
+                        do {
+                            if (scan.hasNext())
+                                productContent += (scan.nextLine() + " ");
+                        } while (scan.hasNext());
+                        String[] content = productContent.split("\\$");
+                        System.out.println(content.length);
+                        Object[] objects = {content[1], content[2], content[3], content[4], content[5], content[6]};
+                        defaultTableModel.addRow(objects);
+
+                        tableProducts = new JTable(defaultTableModel);
+                        tableProducts.getTableHeader().setReorderingAllowed(false);
+                        productsPanel.removeAll();
+                        productsPanel.add(titleWithPlusProducts, BorderLayout.NORTH);
+                        JPanel rigidWithFullTable = new JPanel();
+                        rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
+                        rigidWithFullTable.add(Box.createRigidArea(new Dimension(0, 15)));
+                        rigidWithFullTable.add(tableProducts.getTableHeader());
+                        rigidWithFullTable.add(tableProducts);
+                        productsPanel.add(rigidWithFullTable, BorderLayout.CENTER);
+                        frame.getContentPane().revalidate();
+                        frame.getContentPane().repaint();
+                    }
+                }
+            }
+            ;
+        }
+    }
+
+    public static boolean isGroupNameUnique(String groupName){
+        File file = new File("StorageData\\");
+        for(int i = 0; i < file.list().length; i++){
+            if(file.listFiles()[i].getName().equalsIgnoreCase(groupName))
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean isProductNameUnique(String groupName){
+        File file = new File("StorageData\\");
+        for(int i = 0; i < file.list().length; i++){
+            File group = new File(file.getPath() + "\\" + file.list()[i] + "\\");
+            for(int j = 0; j < group.list().length; j++){
+                if(group.listFiles()[j].getName().equalsIgnoreCase(groupName + ".txt"))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    private static double overallPrice(String groupOfProducts){
+        File file = new File("StorageData\\" + groupOfProducts + "\\");
+        double price = 0;
+        for(int i = 0; i < file.list().length; i++){
+            if(file.listFiles()[i].getName().equals("description.txt"))
+                continue;
+            File product = new File(file.getPath() + "\\" + file.listFiles()[i].getName());
+            try {
+                FileReader reader = new FileReader(product);
+                Scanner scan = new Scanner(reader);
+                String scannedLine = scan.nextLine();
+                price += Double.parseDouble(scannedLine.split("\\$")[5])*Double.parseDouble(scannedLine.split("\\$")[6]);
+                reader.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        price = price * 100;
+        int i = (int) Math.round(price);
+        price = (double)i / 100;
+        return price;
+    }
+
 }
