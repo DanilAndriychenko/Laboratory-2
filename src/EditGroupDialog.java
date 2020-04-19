@@ -10,7 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class AddNewGroupDialog extends JDialog {
+public class EditGroupDialog extends JDialog {
 
     private final JLabel jLabelGroupName = new JLabel("Group name: ");
     private final JLabel jLabelDescription = new JLabel("Description: ");
@@ -18,17 +18,22 @@ public class AddNewGroupDialog extends JDialog {
     private final JTextField groupTextField = new JTextField(20);
     private final JTextArea descriptionTextArea = new JTextArea(8, 8);
 
-    private final JButton jButtonCreate = new JButton("Create");
+    private final JButton jButtonCreate = new JButton("Apply changes");
     private final JButton jButtonCancel = new JButton("Cancel");
 
     private final JLabel jLabelStatus = new JLabel(" ");
     private Font font;
+    private String group, description;
 
-    AddNewGroupDialog(final JFrame owner, boolean modal) {
+    EditGroupDialog(final JFrame owner, boolean modal, String group, String description) {
         super(owner, "New Group", modal);
         setResizable(false);
         font = new Font("Serif", Font.PLAIN, 20);
+        this.group=group;
+        this.description=description;
         descriptionTextArea.setLineWrap(true);
+        groupTextField.setText(group);
+        descriptionTextArea.setText(description);
         JScrollPane jScrollPane = new JScrollPane(descriptionTextArea);
         JPanel buttonsPanel = new JPanel(new GridBagLayout());
         GridBagHelper helperButtons = new GridBagHelper();
@@ -54,22 +59,16 @@ public class AddNewGroupDialog extends JDialog {
         jButtonCreate.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!groupTextField.getText().equals("")) {
-                    Path path = Paths.get("StorageData\\" + groupTextField.getText());
-                    try {
-                        Files.createDirectory(path);
-                    } catch (IOException ex) {
-                    }
-                    File description = new File("StorageData\\" + groupTextField.getText() + "\\description.txt");
-                    try {
-                        PrintWriter writer = new PrintWriter(description);
-                        writer.write(descriptionTextArea.getText());
-                        writer.close();
-                    } catch (FileNotFoundException ex) {
-                    }
-                    Storage.revalidateGroupsTableData();
-                    setVisible(false);
+                File directoryBefore = new File("StorageData\\" + group);
+                File groupDirectory = new File("StorageData\\" + groupTextField.getText());
+                if (groupTextField.getText().equals(group)) writeDescription();
+                else if (directoryBefore.exists()){
+                    System.out.println(directoryBefore.renameTo(groupDirectory));
+                    writeDescription();
                 }
+                Storage.revalidateGroupsTableData();
+                Storage.revalidateProductsTableData();
+                setVisible(false);
             }
         });
         jButtonCancel.addActionListener(new ActionListener() {
@@ -80,4 +79,13 @@ public class AddNewGroupDialog extends JDialog {
         });
     }
 
+    private void writeDescription(){
+        File description = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + groupTextField.getText() + "\\description.txt");
+        try {
+            PrintWriter writer = new PrintWriter(description);
+            writer.write(descriptionTextArea.getText());
+            writer.close();
+        } catch (FileNotFoundException ex) {
+        }
+    }
 }

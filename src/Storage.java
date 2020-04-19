@@ -1,5 +1,7 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,6 +18,7 @@ public class Storage {
     private static JTable tableGroups, tableProducts;
     private static Object[] titlesGroups = {"Group of Products", "Description", "Overall Price"};
     private static Object[] titlesProducts = {"Product", "Description", "Group of Product", "Manufacturer", "Price per one", "Overall Price"};
+    private static JPopupMenu jPopupMenu;
     private JPanel controlPanel, contentPanel;
     private Font font;
 
@@ -39,10 +42,98 @@ public class Storage {
         Storage storage = new Storage("Storage");
     }
 
+    public static void revalidateGroupsTableData() {
+        File storage = new File("StorageData\\");
+        DefaultTableModel defaultTableModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column != 2;
+            }
+        };
+        defaultTableModel.setColumnIdentifiers(titlesGroups);
+        for (int i = 0; i < storage.list().length; i++) {
+            String description = "";
+            try {
+                FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\description.txt");
+                Scanner scan = new Scanner(reader);
+                do {
+                    if (scan.hasNext())
+                        description += (scan.nextLine() + " ");
+                } while (scan.hasNext());
+            } catch (Exception e) {
+                //TODO
+                e.printStackTrace();
+            }
+            Object[] objects = {storage.list()[i], description, 0};
+            defaultTableModel.addRow(objects);
+        }
+        tableGroups = new JTable(defaultTableModel);
+        tableGroups.setComponentPopupMenu(jPopupMenu);
+        tableGroups.getTableHeader().setReorderingAllowed(false);
+        groupPanel.removeAll();
+        groupPanel.add(titleWithPlusGroups, BorderLayout.NORTH);
+        JPanel rigidWithFullTable = new JPanel();
+        rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
+        rigidWithFullTable.add(Box.createRigidArea(new Dimension(0, 15)));
+        rigidWithFullTable.add(tableGroups.getTableHeader());
+        rigidWithFullTable.add(tableGroups);
+        groupPanel.add(rigidWithFullTable, BorderLayout.CENTER);
+        frame.getContentPane().revalidate();
+        frame.getContentPane().repaint();
+    }
+
+    public static void revalidateProductsTableData() {
+        File storage = new File("StorageData\\");
+        DefaultTableModel defaultTableModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                if (column == 2 || column == 5) return false;
+                return true;
+            }
+        };
+        defaultTableModel.setColumnIdentifiers(titlesProducts);
+        for (int i = 0; i < storage.list().length; i++) {
+            File group = new File("StorageData\\" + storage.listFiles()[i].getName());
+            for (int j = 0; j < group.list().length; j++) {
+                String productContent = "";
+                try {
+                    if (group.listFiles()[j].getName().equals("description.txt"))
+                        continue;
+                    FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
+                    Scanner scan = new Scanner(reader);
+                    do {
+                        if (scan.hasNext())
+                            productContent += (scan.nextLine() + " ");
+                    } while (scan.hasNext());
+                } catch (Exception e) {
+                    //TODO
+                    e.printStackTrace();
+                }
+                String[] content = productContent.split("\\$");
+                Object[] objects = {content[1], content[2], content[3], content[4], content[5], content[6]};
+                defaultTableModel.addRow(objects);
+            }
+
+        }
+        tableProducts = new JTable(defaultTableModel);
+        tableProducts.getTableHeader().setReorderingAllowed(false);
+        productsPanel.removeAll();
+        productsPanel.add(titleWithPlusProducts, BorderLayout.NORTH);
+        JPanel rigidWithFullTable = new JPanel();
+        rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
+        rigidWithFullTable.add(Box.createRigidArea(new Dimension(0, 15)));
+        rigidWithFullTable.add(tableProducts.getTableHeader());
+        rigidWithFullTable.add(tableProducts);
+        productsPanel.add(rigidWithFullTable, BorderLayout.CENTER);
+        frame.getContentPane().revalidate();
+        frame.getContentPane().repaint();
+    }
+
     private void startInterface() {
         contentPanel = new JPanel();
-        contentPanel.setLayout(new GridLayout(2,1));
+        contentPanel.setLayout(new GridLayout(2, 1));
         controlPanel = new JPanel();
+        jPopupMenu = new JPopupMenu();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
         frame.add(contentPanel, BorderLayout.CENTER);
         controlPanel.setBackground(Color.DARK_GRAY);
@@ -86,9 +177,8 @@ public class Storage {
         JButton addNewGroupButton = new JButton("+");
         JTextField searchGroupTextField = new JTextField(20);
 
-
         titleWithPlusGroups = new JPanel();
-        titleWithPlusGroups.setLayout(new GridLayout(1,2));
+        titleWithPlusGroups.setLayout(new GridLayout(1, 2));
         JPanel labelWithRigidAndPlus = new JPanel();
         labelWithRigidAndPlus.setLayout(new BoxLayout(labelWithRigidAndPlus, BoxLayout.X_AXIS));
         labelWithRigidAndPlus.add(groupsLabel);
@@ -159,7 +249,7 @@ public class Storage {
                                 Scanner scan = new Scanner(reader);
                                 do {
                                     if (scan.hasNext())
-                                    productContent += (scan.nextLine() + " ");
+                                        productContent += (scan.nextLine() + " ");
                                 } while (scan.hasNext());
                                 String[] content = productContent.split("\\$");
                                 System.out.println(content.length);
@@ -216,91 +306,40 @@ public class Storage {
             addNewProductDialog.setLocationRelativeTo(null);
             addNewProductDialog.setVisible(true);
         });
-    }
 
-    public static void revalidateGroupsTableData() {
-        File storage = new File("StorageData\\");
-        DefaultTableModel defaultTableModel = new DefaultTableModel() {
+
+        jPopupMenu.addPopupMenuListener(new PopupMenuListener() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return column != 2;
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        int rowAtPoint = tableGroups.rowAtPoint(SwingUtilities.convertPoint(jPopupMenu, new Point(0, 0), tableGroups));
+                        if (rowAtPoint > -1) {
+                            tableGroups.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+                        }
+                    }
+                });
             }
-        };
-        defaultTableModel.setColumnIdentifiers(titlesGroups);
-        for (int i = 0; i < storage.list().length; i++) {
-            String description = "";
-            try {
-                FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\description.txt");
-                Scanner scan = new Scanner(reader);
-                do{
-                    if(scan.hasNext())
-                    description += (scan.nextLine()+";");
-                }while (scan.hasNext());
-            } catch (Exception e) {
-                //TODO
-                e.printStackTrace();
-            }
-            Object[] objects = {storage.list()[i], description, 0};
-            defaultTableModel.addRow(objects);
-        }
-        tableGroups = new JTable(defaultTableModel);
-        tableGroups.getTableHeader().setReorderingAllowed(false);
-        groupPanel.removeAll();
-        groupPanel.add(titleWithPlusGroups, BorderLayout.NORTH);
-        JPanel rigidWithFullTable = new JPanel();
-        rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
-        rigidWithFullTable.add(Box.createRigidArea(new Dimension(0,15)));
-        rigidWithFullTable.add(tableGroups.getTableHeader());
-        rigidWithFullTable.add(tableGroups);
-        groupPanel.add(rigidWithFullTable, BorderLayout.CENTER);
-        frame.getContentPane().revalidate();
-        frame.getContentPane().repaint();
-    }
 
-    public static void revalidateProductsTableData() {
-        File storage = new File("StorageData\\");
-        DefaultTableModel defaultTableModel = new DefaultTableModel() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                if (column == 2 || column == 5) return false;
-                return true;
-            }
-        };
-        defaultTableModel.setColumnIdentifiers(titlesProducts);
-        for (int i = 0; i < storage.list().length; i++) {
-            File group = new File("StorageData\\" + storage.listFiles()[i].getName());
-                for(int j = 0; j < group.list().length; j++){
-                    String productContent = "";
-                    try {
-                        if(group.listFiles()[j].getName().equals("description.txt"))
-                            continue;
-                        FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
-                        Scanner scan = new Scanner(reader);
-                        do{
-                            if(scan.hasNext())
-                            productContent += (scan.nextLine()+" ");
-                        }while (scan.hasNext());
-                    } catch (Exception e) {
-                        //TODO
-                        e.printStackTrace();
-                }
-                    String[]content = productContent.split("\\$");
-                    Object[] objects = {content[1], content[2], content[3], content[4], content[5], content[6]};
-                    defaultTableModel.addRow(objects);
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
             }
 
-        }
-        tableProducts = new JTable(defaultTableModel);
-        tableProducts.getTableHeader().setReorderingAllowed(false);
-        productsPanel.removeAll();
-        productsPanel.add(titleWithPlusProducts, BorderLayout.NORTH);
-        JPanel rigidWithFullTable = new JPanel();
-        rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
-        rigidWithFullTable.add(Box.createRigidArea(new Dimension(0,15)));
-        rigidWithFullTable.add(tableProducts.getTableHeader());
-        rigidWithFullTable.add(tableProducts);
-        productsPanel.add(rigidWithFullTable, BorderLayout.CENTER);
-        frame.getContentPane().revalidate();
-        frame.getContentPane().repaint();
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+            }
+        });
+        JMenuItem editItem = new JMenuItem("Edit");
+        jPopupMenu.add(editItem);
+        JMenuItem deleteItem = new JMenuItem("Delete");
+        jPopupMenu.add(deleteItem);
+        editItem.addActionListener(actionEvent -> {
+            String groupName = (String) tableGroups.getValueAt(tableGroups.getSelectedRow(), 0);
+            String description = (String) tableGroups.getValueAt(tableGroups.getSelectedRow(), 1);
+            JDialog editGroupDialog = new EditGroupDialog(frame, true, groupName, description);
+            editGroupDialog.setLocationRelativeTo(null);
+            editGroupDialog.setVisible(true);
+        });
     }
 }
