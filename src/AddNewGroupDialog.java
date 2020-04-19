@@ -56,7 +56,7 @@ public class AddNewGroupDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (groupTextField != null && jTextArea != null && !groupTextField.getText().equals("")) {
-                    Path path = Paths.get("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + groupTextField.getText());
+                    Path path = Paths.get("StorageData\\" + groupTextField.getText());
                     try {
                         Files.createDirectory(path);
                     } catch (IOException ex) {
@@ -67,7 +67,7 @@ public class AddNewGroupDialog extends JDialog {
                         } catch (InterruptedException exc) {
                         }*/
                     }
-                    File description = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + groupTextField.getText() + "\\description.txt");
+                    File description = new File("StorageData\\" + groupTextField.getText() + "\\description.txt");
                     try {
                         PrintWriter writer = new PrintWriter(description);
                         writer.write(jTextArea.getText());

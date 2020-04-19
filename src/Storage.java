@@ -2,7 +2,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.Scanner;
 
@@ -121,8 +124,71 @@ public class Storage {
         JButton addNewProductButton = new JButton("+");
         JTextField searchProductTextField = new JTextField(20);
 
+        searchProductTextField.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+
+                String product = searchProductTextField.getText();
+
+                if (product.equals("")) {
+                    revalidateProductsTableData();
+                    return;
+                }
+                DefaultTableModel defaultTableModel = new DefaultTableModel() {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        if (column == 2 || column == 5) return false;
+                        return true;
+                    }
+                };
+                defaultTableModel.setColumnIdentifiers(titlesProducts);
+                File storage = new File("StorageData\\");
+                for (int i = 0; i < storage.list().length; i++) {
+                    File group = new File("StorageData\\" + storage.listFiles()[i].getName());
+                    for (int j = 0; j < group.list().length; j++) {
+                        if (!group.listFiles()[j].getName().equals("description.txt")) {
+                            System.out.println(group.listFiles()[j].getName());
+                            String productContent = "";
+                            if (group.listFiles()[j].getName().equalsIgnoreCase(product + ".txt")) {
+                                FileReader reader = null;
+                                try {
+                                    reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
+                                } catch (FileNotFoundException ex) {
+                                    ex.printStackTrace();
+                                }
+                                Scanner scan = new Scanner(reader);
+                                do {
+                                    if (scan.hasNext())
+                                    productContent += (scan.nextLine() + " ");
+                                } while (scan.hasNext());
+                                String[] content = productContent.split("\\$");
+                                System.out.println(content.length);
+                                Object[] objects = {content[1], content[2], content[3], content[4], content[5], content[6]};
+                                defaultTableModel.addRow(objects);
+
+                                tableProducts = new JTable(defaultTableModel);
+                                tableProducts.getTableHeader().setReorderingAllowed(false);
+                                productsPanel.removeAll();
+                                productsPanel.add(titleWithPlusProducts, BorderLayout.NORTH);
+                                JPanel rigidWithFullTable = new JPanel();
+                                rigidWithFullTable.setLayout(new BoxLayout(rigidWithFullTable, BoxLayout.Y_AXIS));
+                                rigidWithFullTable.add(Box.createRigidArea(new Dimension(0, 15)));
+                                rigidWithFullTable.add(tableProducts.getTableHeader());
+                                rigidWithFullTable.add(tableProducts);
+                                productsPanel.add(rigidWithFullTable, BorderLayout.CENTER);
+                                frame.getContentPane().revalidate();
+                                frame.getContentPane().repaint();
+                            }
+                        }
+                    }
+                    ;
+                }
+
+            }
+        });
+
         titleWithPlusProducts = new JPanel();
-        titleWithPlusProducts.setLayout(new GridLayout(1,2));
+        titleWithPlusProducts.setLayout(new GridLayout(1, 2));
         JPanel labelWithRigidAndPlus2 = new JPanel();
         labelWithRigidAndPlus2.setLayout(new BoxLayout(labelWithRigidAndPlus2, BoxLayout.X_AXIS));
         labelWithRigidAndPlus2.add(productsLabel);
@@ -153,8 +219,8 @@ public class Storage {
     }
 
     public static void revalidateGroupsTableData() {
-        File storage = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\");
-        DefaultTableModel defaultTableModel = new DefaultTableModel(){
+        File storage = new File("StorageData\\");
+        DefaultTableModel defaultTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column != 2;
@@ -164,7 +230,7 @@ public class Storage {
         for (int i = 0; i < storage.list().length; i++) {
             String description = "";
             try {
-                FileReader reader = new FileReader("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + storage.listFiles()[i].getName() + "\\description.txt");
+                FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\description.txt");
                 Scanner scan = new Scanner(reader);
                 do{
                     if(scan.hasNext())
@@ -192,9 +258,8 @@ public class Storage {
     }
 
     public static void revalidateProductsTableData() {
-        File storage = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\");
-        DefaultTableModel defaultTableModel = new DefaultTableModel()
-        {
+        File storage = new File("StorageData\\");
+        DefaultTableModel defaultTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 if (column == 2 || column == 5) return false;
@@ -203,13 +268,13 @@ public class Storage {
         };
         defaultTableModel.setColumnIdentifiers(titlesProducts);
         for (int i = 0; i < storage.list().length; i++) {
-            String productContent = "";
-                File group = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + storage.listFiles()[i].getName());
+            File group = new File("StorageData\\" + storage.listFiles()[i].getName());
                 for(int j = 0; j < group.list().length; j++){
+                    String productContent = "";
                     try {
                         if(group.listFiles()[j].getName().equals("description.txt"))
                             continue;
-                        FileReader reader = new FileReader("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
+                        FileReader reader = new FileReader("StorageData\\" + storage.listFiles()[i].getName() + "\\" + group.listFiles()[j].getName());
                         Scanner scan = new Scanner(reader);
                         do{
                             if(scan.hasNext())

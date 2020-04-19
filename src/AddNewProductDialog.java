@@ -73,15 +73,13 @@ public class AddNewProductDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         jButtonCreate.addActionListener(e -> {
-            if (groupTextField != null && descriptionTextArea != null && !groupTextField.getText().equals("") && !jLabelManufacturer.getText().equals("")) {
-                File productFile = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\" + groupComboBox.getSelectedItem() + "\\" + groupTextField.getText() + ".txt");
+            if (!groupTextField.getText().equals("") && !jLabelManufacturer.getText().equals("")) {
+                File productFile = new File("StorageData\\" + groupComboBox.getSelectedItem() + "\\" + groupTextField.getText() + ".txt");
                 try {
                     PrintWriter writer = new PrintWriter(productFile);
                     writer.write("$" + groupTextField.getText() + "$" + descriptionTextArea.getText() + "$" + groupComboBox.getSelectedItem() + "$" + manufacturerTextField.getText() + "$" + priceSpinner.getValue() + "$" + "0$");
                     writer.close();
                 } catch (IOException ex) {
-                    /*jLabelStatus.setText("Incorrect input.");
-                    jLabelStatus.setVisible(true);*/
                 }
                 Storage.revalidateProductsTableData();
                 setVisible(false);
@@ -96,7 +94,7 @@ public class AddNewProductDialog extends JDialog {
     }
 
     private static String[] getGroups(){
-        File storage = new File("D:\\Java IntelliJ IDEA\\Laboratory 2\\StorageData\\");
+        File storage = new File("StorageData\\");
         String[] groups = new String[storage.list().length];
         for (int i = 0; i < storage.list().length; i++) {
             groups[i] = storage.listFiles()[i].getName();
